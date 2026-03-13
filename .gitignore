@@ -1,0 +1,34 @@
+# Virtual environment
+venv/
+
+# Data files
+TELCO_data/
+TELCO_labels/
+*.csv
+
+# Model artifacts
+*.pkl
+*.h5
+*.jpg
+*.keras
+*_scaler.pkl
+*_anomaly_predictions.csv
+*_abs_error.csv
+*_reconstructions.csv
+*_sigma.csv
+*_latent_space.csv
+
+# AutoML models (large binary files)
+automl/models/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
