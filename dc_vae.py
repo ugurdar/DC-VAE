@@ -15,6 +15,7 @@ from tensorflow.keras import optimizers
 #from tensorflow.keras.utils import timeseries_dataset_from_array
 from tensorflow.keras.preprocessing import timeseries_dataset_from_array
 from tensorflow import keras
+import keras.ops as ops
 import pandas as pd
 import numpy as np
 from sklearn.metrics import f1_score, recall_score, precision_score
@@ -38,11 +39,31 @@ class Sampling(Layer):
     
     def call(self, inputs):
         z_mean, z_log_var = inputs
-        batch = K.shape(z_mean)[0]
-        seq = K.shape(z_mean)[1]
-        dim = K.shape(z_mean)[2]
-        epsilon = K.random_normal(shape=(batch, seq, dim))
-        return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+        batch = ops.shape(z_mean)[0]
+        seq = ops.shape(z_mean)[1]
+        dim = ops.shape(z_mean)[2]
+        epsilon = keras.random.normal(shape=(batch, seq, dim))
+        return z_mean + ops.exp(0.5 * z_log_var) * epsilon
+
+
+@keras.utils.register_keras_serializable()
+class VAELoss(Layer):
+    """Custom layer that computes and adds the VAE loss."""
+    def call(self, args):
+        inputs, x__mean, x_log_var, z_mean, z_log_var = args
+        # Reconstruction term
+        MSE = -0.5 * ops.mean(ops.square((inputs - x__mean) / ops.exp(x_log_var)), axis=-1)
+        sigma_trace = -ops.mean(x_log_var, axis=-1)
+        log_likelihood = MSE + sigma_trace
+        reconstruction_loss = ops.mean(-log_likelihood)
+        # KL term
+        kl_loss = 1 + z_log_var - ops.square(z_mean) - ops.exp(z_log_var)
+        kl_loss = ops.mean(kl_loss, axis=-1)
+        kl_loss *= -0.5
+        kl_loss = ops.mean(kl_loss)
+        # Total
+        self.add_loss(reconstruction_loss + kl_loss)
+        return [x__mean, x_log_var]
 
 
 class DCVAE:
@@ -152,25 +173,12 @@ class DCVAE:
 
         # Instantiate DC-VAE model
         # =============================================================================
-        [x__mean, x_log_var] = self.decoder(self.encoder(inputs)[2])
+        encoder_out = self.encoder(inputs)
+        z_mean_out, z_log_var_out, z = encoder_out[0], encoder_out[1], encoder_out[2]
+        x__mean, x_log_var = self.decoder(z)
+        x__mean, x_log_var = VAELoss(name='vae_loss')(
+            [inputs, x__mean, x_log_var, z_mean_out, z_log_var_out])
         self.vae = Model(inputs, [x__mean, x_log_var], name='vae')
-        
-        # Loss
-        # Reconstruction term
-        MSE = -0.5*K.mean(K.square((inputs - x__mean)/K.exp(x_log_var)),axis=-1) #Mean in M
-        sigma_trace = -K.mean(x_log_var, axis=(-1)) #Mean in M
-        log_likelihood = MSE+sigma_trace
-        reconstruction_loss = K.mean(-log_likelihood) #Mean in the batch and T   
-       
-        # Priori hypothesis term
-        kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-        kl_loss = K.mean(kl_loss, axis=-1) #Mean in J
-        kl_loss *= -0.5
-        kl_loss = tf.reduce_mean(kl_loss) #Mean in the batch and T
-        
-        # Total
-        vae_loss = K.mean(reconstruction_loss + kl_loss)
-        self.vae.add_loss(vae_loss)
         
         # Learning rate
         if lr_decay: 
@@ -182,14 +190,8 @@ class DCVAE:
         else:
             lr = learning_rate
 
-        # Optimaizer
+        # Optimizer
         opt = optimizers.Adam(learning_rate=lr)
-
-        # Metrics
-        self.vae.add_metric(reconstruction_loss, name='reconst')
-        self.vae.add_metric(kl_loss, name='kl')
-
-
         self.vae.compile(optimizer=opt)
 
 
@@ -216,7 +218,7 @@ class DCVAE:
                                                       verbose=1,
                                                       mode='min')
         model_checkpoint_cb= keras.callbacks.ModelCheckpoint(
-            filepath=self.name+'_best_model.h5',
+            filepath=self.name+'_best_model.keras',
             verbose=1,
             mode='min',
             save_best_only=True)
@@ -232,9 +234,9 @@ class DCVAE:
                      )  
         
         # Save models
-        self.encoder.save(self.name+'_encoder.h5')
-        self.decoder.save(self.name+'_decoder.h5')
-        self.vae.save(self.name+'_complete.h5')
+        self.encoder.save(self.name+'_encoder.keras')
+        self.decoder.save(self.name+'_decoder.keras')
+        self.vae.save(self.name+'_complete.keras')
 
         return self
 
@@ -248,8 +250,7 @@ class DCVAE:
                    
         # Model
         if load_model:
-            self.vae = keras.models.load_model(self.name+'_best_model.h5',
-                                                  custom_objects={'sampling': Sampling},
+            self.vae = keras.models.load_model(self.name+'_best_model.keras',
                                                   compile = False)
         # Data
         X = df_X.values
@@ -331,11 +332,9 @@ class DCVAE:
         
         # Trained model
         if load_model:
-            self.vae = keras.models.load_model(self.name+'_best_model.h5',
-                                                    custom_objects={'sampling': Sampling},
+            self.vae = keras.models.load_model(self.name+'_best_model.keras',
                                                     compile = False)
-            self.encoder = keras.models.load_model(self.name+'_encoder.h5',
-                                                    custom_objects={'sampling': Sampling},
+            self.encoder = keras.models.load_model(self.name+'_encoder.keras',
                                                     compile = False)
         
         # Inference model. Auxiliary model so that in the inference 

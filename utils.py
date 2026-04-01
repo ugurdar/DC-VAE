@@ -29,8 +29,8 @@ def preprocessing(dataRaw=None, flag_scaler=True, scaler=None, scaler_name=None,
         filtered_entries = (abs_z_scores > max_std)
         X = X.mask(filtered_entries)
 
-    X.fillna(method='ffill', inplace=True) 
-    X.fillna(method='bfill', inplace=True)
+    X.ffill(inplace=True) 
+    X.bfill(inplace=True)
 
     if flag_scaler:
         if instance == 'fit':
