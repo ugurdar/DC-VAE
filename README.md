@@ -1,5 +1,10 @@
 # DC-VAE
 
+# Articles
+
+https://arxiv.org/pdf/2510.08739
+
+
 ### _One Model to Find them All – Deep Learning for Multivariate Time-Series Anomaly Detection in Mobile Network Data_
 
 In the following repository we intend to make available the python code used in the experimental part of our work. We welcome any comments or suggestions that help improve the repository.
