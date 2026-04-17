@@ -1,0 +1,45 @@
+Beginning AutoGluon training... Time limit = 180s
+AutoGluon will save models to '/Users/ugurdar/Documents/doktora/enfield/DC-VAE/forecasting/ts1_forecast_short'
+=================== System Info ===================
+AutoGluon Version:  1.5.0
+Python Version:     3.11.9
+Operating System:   Darwin
+Platform Machine:   arm64
+Platform Version:   Darwin Kernel Version 25.2.0: Tue Nov 18 21:08:48 PST 2025; root:xnu-12377.61.12~1/RELEASE_ARM64_T8132
+CPU Count:          10
+Pytorch Version:    2.9.1
+CUDA Version:       CUDA is not available
+GPU Count:          WARNING: Exception was raised when calculating GPU count (AssertionError)
+Memory Avail:       7.75 GB / 24.00 GB (32.3%)
+Disk Space Avail:   40.78 GB / 460.43 GB (8.9%)
+===================================================
+
+Fitting with arguments:
+{'enable_ensemble': False,
+ 'eval_metric': MASE,
+ 'freq': '5min',
+ 'hyperparameters': {'DeepAR': {}},
+ 'known_covariates_names': [],
+ 'num_val_windows': 2,
+ 'prediction_length': 48,
+ 'quantile_levels': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+ 'random_seed': 42,
+ 'refit_every_n_windows': 1,
+ 'refit_full': False,
+ 'skip_model_selection': False,
+ 'target': 'target',
+ 'time_limit': 180,
+ 'verbosity': 2}
+
+Provided train_data has 352 rows, 1 time series. Median time series length is 352 (min=352, max=352). 
+
+Provided data contains following columns:
+	target: 'target'
+
+AutoGluon will gauge predictive performance using evaluation metric: 'MASE'
+	This metric's sign has been flipped to adhere to being higher_is_better. The metric score can be multiplied by -1 to get the metric value.
+===================================================
+
+Starting training. Start time is 2026-04-16 14:22:43
+Models that will be trained: ['DeepAR']
+Training timeseries model DeepAR. Training for up to 179.4s of the 179.4s of remaining time.
