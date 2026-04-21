@@ -2,9 +2,7 @@
 venv/
 
 # Data files
-TELCO_data/
-TELCO_labels/
-*.csv
+
 
 # Model artifacts
 *.pkl
@@ -20,6 +18,14 @@ TELCO_labels/
 
 # AutoML models (large binary files)
 automl/models/
+automl/multivariate/models/h2o/
+automl/multivariate/models/TS1/
+
+# Large SHAP CSV files (>100MB)
+automl/results/autogluon/rashomon_full_test/
+automl/results/autogluon/rashomon_anomaly/
+automl/results/autogluon/surrogate_shap/
+automl/results/autogluon/implet_xai/attributions.csv
 
 # Python
 __pycache__/
